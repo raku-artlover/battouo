@@ -27,7 +27,6 @@ font-size:30px;
 
 <h1>⚔ 抜刀チャレンジ</h1>
 
-<button onclick="connect()">接続</button>
 <button onclick="startGame()">START</button>
 
 <div id="text">
@@ -41,8 +40,10 @@ let port;
 let reader;
 
 let distance=0;
+let target;
 
 
+// Arduino接続
 async function connect(){
 
 port=await navigator.serial.requestPort();
@@ -51,20 +52,7 @@ await port.open({
 baudRate:9600
 });
 
-
 reader=port.readable.getReader();
-
-
-readSerial();
-
-
-document.getElementById("text").innerHTML="接続完了";
-
-}
-
-
-
-async function readSerial(){
 
 let buffer="";
 
@@ -72,7 +60,6 @@ let buffer="";
 while(true){
 
 const {value,done}=await reader.read();
-
 
 if(done)break;
 
@@ -87,14 +74,14 @@ buffer=lines.pop();
 
 for(let line of lines){
 
-let num=parseInt(line.trim());
+let num=Number(line.trim());
 
 
 if(!isNaN(num)){
 
 distance=num;
 
-console.log(distance);
+console.log("距離:",distance);
 
 }
 
@@ -105,15 +92,21 @@ console.log(distance);
 }
 
 
+// ゲーム開始
+async function startGame(){
 
-function startGame(){
+if(!port){
+
+await connect();
+
+}
 
 
-let startDistance=distance;
+target=Math.floor(Math.random()*40)+10;
 
 
 document.getElementById("text").innerHTML=
-"開始:"+startDistance+"cm";
+target+"cm 抜け！";
 
 
 let count=3;
@@ -127,24 +120,51 @@ document.getElementById("text").innerHTML=count;
 
 if(count==0){
 
-
 clearInterval(timer);
 
 
-let endDistance=distance;
+let result=distance;
+
+let diff=Math.abs(target-result);
+
+let score=100-diff*10;
 
 
-let diff=Math.abs(
-endDistance-startDistance
-);
+if(score<0){
+score=0;
+}
+
+
+let evaluation;
+
+
+if(diff<=2){
+
+evaluation="達人級 ⚔";
+
+}else if(diff<=5){
+
+evaluation="かなり近い！";
+
+}else if(diff<=10){
+
+evaluation="惜しい！";
+
+}else{
+
+evaluation="修行不足";
+
+}
 
 
 document.getElementById("text").innerHTML=
 `
 結果<br>
-開始:${startDistance}cm<br>
-終了:${endDistance}cm<br>
-差:${diff}cm
+目標:${target}cm<br>
+実測:${result}cm<br>
+差:${diff}cm<br>
+点数:${score}<br>
+${evaluation}
 `;
 
 }
