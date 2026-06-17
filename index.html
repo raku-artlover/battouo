@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>抜刀ゲーム</title>
+
 <style>
 body{
 background:black;
@@ -9,25 +10,30 @@ color:white;
 text-align:center;
 font-family:sans-serif;
 }
+
 #text{
 font-size:60px;
 margin-top:200px;
 }
+
 button{
 font-size:30px;
 }
 </style>
+
 </head>
 
 <body>
 
 <h1>⚔ 抜刀チャレンジ</h1>
 
+<button onclick="connect()">接続</button>
 <button onclick="startGame()">START</button>
 
 <div id="text">
 接続してください
 </div>
+
 
 <script>
 
@@ -35,8 +41,6 @@ let port;
 let reader;
 
 let distance=0;
-let startDistance=0;
-let endDistance=0;
 
 
 async function connect(){
@@ -47,31 +51,50 @@ await port.open({
 baudRate:9600
 });
 
+
 reader=port.readable.getReader();
 
+
+readSerial();
+
+
+document.getElementById("text").innerHTML="接続完了";
+
+}
+
+
+
+async function readSerial(){
+
 let buffer="";
+
 
 while(true){
 
 const {value,done}=await reader.read();
 
+
 if(done)break;
 
+
 buffer+=new TextDecoder().decode(value);
+
 
 let lines=buffer.split("\n");
 
 buffer=lines.pop();
 
+
 for(let line of lines){
 
 let num=parseInt(line.trim());
+
 
 if(!isNaN(num)){
 
 distance=num;
 
-console.log("距離:",distance);
+console.log(distance);
 
 }
 
@@ -82,18 +105,15 @@ console.log("距離:",distance);
 }
 
 
-async function startGame(){
 
-if(!port){
+function startGame(){
 
-await connect();
 
-}
+let startDistance=distance;
 
-startDistance=distance;
 
 document.getElementById("text").innerHTML=
-"開始距離："+startDistance+"cm";
+"開始:"+startDistance+"cm";
 
 
 let count=3;
@@ -101,14 +121,17 @@ let count=3;
 
 let timer=setInterval(()=>{
 
+
 document.getElementById("text").innerHTML=count;
 
 
 if(count==0){
 
+
 clearInterval(timer);
 
-endDistance=distance;
+
+let endDistance=distance;
 
 
 let diff=Math.abs(
@@ -126,9 +149,12 @@ document.getElementById("text").innerHTML=
 
 }
 
+
 count--;
 
+
 },1000);
+
 
 }
 
