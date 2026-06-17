@@ -1,46 +1,24 @@
+
+
 <!DOCTYPE html>
 <html>
 <head>
-<title>抜刀ゲーム</title>
-
-<style>
-body{
-background:black;
-color:white;
-text-align:center;
-font-family:sans-serif;
-}
-
-#text{
-font-size:60px;
-margin-top:200px;
-}
-
-button{
-font-size:30px;
-}
-</style>
-
+<title>Arduino距離確認</title>
 </head>
 
-<body>
+<body style="background:black;color:white;text-align:center">
 
-<h1>⚔ 抜刀チャレンジ</h1>
+<h1>距離テスト</h1>
 
 <button onclick="connect()">接続</button>
-<button onclick="startGame()">START</button>
 
-<div id="text">
-接続してください
-</div>
+<h2 id="text">未接続</h2>
 
 
 <script>
 
 let port;
 let reader;
-
-let distance=0;
 
 
 async function connect(){
@@ -52,19 +30,11 @@ baudRate:9600
 });
 
 
+document.getElementById("text").innerHTML="接続中";
+
+
 reader=port.readable.getReader();
 
-
-readSerial();
-
-
-document.getElementById("text").innerHTML="接続完了";
-
-}
-
-
-
-async function readSerial(){
 
 let buffer="";
 
@@ -85,75 +55,29 @@ let lines=buffer.split("\n");
 buffer=lines.pop();
 
 
+
 for(let line of lines){
+
 
 let num=parseInt(line.trim());
 
 
 if(!isNaN(num)){
 
-distance=num;
-
-console.log(distance);
-
-}
-
-}
-
-}
-
-}
-
-
-
-function startGame(){
-
-
-let startDistance=distance;
-
 
 document.getElementById("text").innerHTML=
-"開始:"+startDistance+"cm";
+"距離："+num+"cm";
 
 
-let count=3;
+console.log(num);
 
 
-let timer=setInterval(()=>{
-
-
-document.getElementById("text").innerHTML=count;
-
-
-if(count==0){
-
-
-clearInterval(timer);
-
-
-let endDistance=distance;
-
-
-let diff=Math.abs(
-endDistance-startDistance
-);
-
-
-document.getElementById("text").innerHTML=
-`
-結果<br>
-開始:${startDistance}cm<br>
-終了:${endDistance}cm<br>
-差:${diff}cm
-`;
+}
 
 }
 
 
-count--;
-
-
-},1000);
+}
 
 
 }
