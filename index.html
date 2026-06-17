@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>抜刀ゲーム</title>
+
+<style>
+
+body{
+background:black;
+color:white;
+text-align:center;
+font-family:sans-serif;
+}
+
+#text{
+font-size:60px;
+margin-top:200px;
+}
+
+button{
+font-size:30px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>⚔ 抜刀チャレンジ</h1>
+
+<button onclick="startGame()">START</button>
+
+
+<div id="text">
+接続してください
+</div>
+
+
+<script>
+
+
+let port;
+let reader;
+
+let distance=0;
+
+let target;
+
+
+async function connect(){
+
+ port=await navigator.serial.requestPort();
+
+ await port.open({
+  baudRate:9600
+ });
+
+
+reader=port.readable.getReader();
+
+
+while(true){
+
+ const {value,done}=await reader.read();
+
+ if(done)break;
+
+
+ let data=new TextDecoder()
+ .decode(value);
+
+
+ distance=parseInt(data);
+
+
+}
+
+}
+
+
+
+async function startGame(){
+
+
+if(!port){
+
+ await connect();
+
+}
+
+
+target=Math.floor(Math.random()*40)+10;
+
+
+document.getElementById("text")
+.innerHTML=
+target+"cm 抜け！";
+
+
+let count=3;
+
+
+let timer=setInterval(()=>{
+
+
+document.getElementById("text")
+.innerHTML=count;
+
+
+count--;
+
+
+if(count<0){
+
+clearInterval(timer);
+
+
+let diff=Math.abs(
+target-distance
+);
+
+
+let score=100-diff*10;
+
+
+document.getElementById("text")
+.innerHTML=
+`
+結果<br>
+${distance}cm<br>
+差:${diff}cm<br>
+点数:${score}
+`;
+
+}
+
+
+},1000);
+
+
+}
+
+
+
+</script>
+
+
+</body>
+
+</html>
