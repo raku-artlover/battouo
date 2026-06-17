@@ -2,7 +2,6 @@
 <html>
 <head>
 <title>抜刀ゲーム</title>
-
 <style>
 body{
 background:black;
@@ -10,17 +9,14 @@ color:white;
 text-align:center;
 font-family:sans-serif;
 }
-
 #text{
 font-size:60px;
 margin-top:200px;
 }
-
 button{
 font-size:30px;
 }
 </style>
-
 </head>
 
 <body>
@@ -33,17 +29,16 @@ font-size:30px;
 接続してください
 </div>
 
-
 <script>
 
 let port;
 let reader;
 
 let distance=0;
-let target;
+let startDistance=0;
+let endDistance=0;
 
 
-// Arduino接続
 async function connect(){
 
 port=await navigator.serial.requestPort();
@@ -56,26 +51,21 @@ reader=port.readable.getReader();
 
 let buffer="";
 
-
 while(true){
 
 const {value,done}=await reader.read();
 
 if(done)break;
 
-
 buffer+=new TextDecoder().decode(value);
-
 
 let lines=buffer.split("\n");
 
 buffer=lines.pop();
 
-
 for(let line of lines){
 
-let num=Number(line.trim());
-
+let num=parseInt(line.trim());
 
 if(!isNaN(num)){
 
@@ -92,7 +82,6 @@ console.log("距離:",distance);
 }
 
 
-// ゲーム開始
 async function startGame(){
 
 if(!port){
@@ -101,19 +90,16 @@ await connect();
 
 }
 
-
-target=Math.floor(Math.random()*40)+10;
-
+startDistance=distance;
 
 document.getElementById("text").innerHTML=
-target+"cm 抜け！";
+"開始距離："+startDistance+"cm";
 
 
 let count=3;
 
 
 let timer=setInterval(()=>{
-
 
 document.getElementById("text").innerHTML=count;
 
@@ -122,59 +108,27 @@ if(count==0){
 
 clearInterval(timer);
 
-
-let result=distance;
-
-let diff=Math.abs(target-result);
-
-let score=100-diff*10;
+endDistance=distance;
 
 
-if(score<0){
-score=0;
-}
-
-
-let evaluation;
-
-
-if(diff<=2){
-
-evaluation="達人級 ⚔";
-
-}else if(diff<=5){
-
-evaluation="かなり近い！";
-
-}else if(diff<=10){
-
-evaluation="惜しい！";
-
-}else{
-
-evaluation="修行不足";
-
-}
+let diff=Math.abs(
+endDistance-startDistance
+);
 
 
 document.getElementById("text").innerHTML=
 `
 結果<br>
-目標:${target}cm<br>
-実測:${result}cm<br>
-差:${diff}cm<br>
-点数:${score}<br>
-${evaluation}
+開始:${startDistance}cm<br>
+終了:${endDistance}cm<br>
+差:${diff}cm
 `;
 
 }
 
-
 count--;
 
-
 },1000);
-
 
 }
 
