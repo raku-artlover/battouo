@@ -1,173 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-<title>抜刀ゲーム</title>
-
-<style>
-body{
-background:black;
-color:white;
-text-align:center;
-font-family:sans-serif;
-}
-
-#text{
-font-size:60px;
-margin-top:200px;
-}
-
-button{
-font-size:30px;
-}
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抜刀チャレンジ - 抜刀王決定戦</title>
+  <!-- Google Fonts: Yuji Boku (Japanese Calligraphy) & Noto Serif JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Yuji+Boku&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
-<h1>⚔ 抜刀チャレンジ</h1>
-
-<button onclick="connect()">接続</button>
-<button onclick="startGame()">START</button>
-
-<div id="text">
-接続してください
-</div>
-
-
-<script>
-
-let port;
-let reader;
-
-let distance=0;
-let startDistance=0;
-
-
-
-// Arduino接続
-async function connect(){
-
-try{
-
-port=await navigator.serial.requestPort();
-
-await port.open({
-baudRate:9600
-});
-
-
-document.getElementById("text").innerHTML=
-"接続成功";
-
-
-reader=port.readable.getReader();
-
-
-let buffer="";
-
-
-while(true){
-
-const {value,done}=await reader.read();
-
-if(done)break;
-
-
-buffer+=new TextDecoder().decode(value);
-
-
-let lines=buffer.split("\n");
-
-buffer=lines.pop();
-
-
-for(let line of lines){
-
-let num=Number(line.trim());
-
-
-if(!isNaN(num)){
-
-distance=num;
-
-console.log("距離:",distance);
-
-}
-
-}
-
-}
-
-
-}catch(e){
-
-document.getElementById("text").innerHTML=
-"接続失敗";
-
-console.log(e);
-
-}
-
-}
-
-
-
-// ゲーム開始
-function startGame(){
-
-
-startDistance=distance;
-
-
-document.getElementById("text").innerHTML=
-"開始";
-
-
-let count=3;
-
-
-let timer=setInterval(()=>{
-
-
-document.getElementById("text").innerHTML=count;
-
-
-
-if(count==0){
-
-
-clearInterval(timer);
-
-
-
-let result=distance;
-
-
-let diff=result-startDistance;
-
-
-
-document.getElementById("text").innerHTML=
-`
-結果<br>
-開始:${startDistance}cm<br>
-終了:${result}cm<br>
-増加:${diff}cm
-`;
-
-}
-
-
-count--;
-
-
-},1000);
-
-
-}
-
-</script>
-
+  <!-- Ambient Japanese theme backgrounds -->
+  <div class="sun-background"></div>
+  <div class="cherry-blossom-container" id="blossoms"></div>
+  <div class="gold-dust-container" id="gold-dust"></div>
+  <div class="app-container">
+    <header>
+      <div class="sub-title">真剣勝負</div>
+      <h1 class="main-title">⚔ 抜刀チャレンジ</h1>
+    </header>
+    <main class="game-card">
+      <!-- CENTER LOGO AREA -->
+      <div id="logo-container" class="logo-container">
+        <h2 class="calligraphy-title">抜刀王</h2>
+      </div>
+      <!-- MAIN STATE TEXT DISPLAY -->
+      <div class="display-panel">
+        <div id="status-text" class="status-text text-calligraphy">接続してください</div>
+        
+        <!-- TARGET CM DISPLAY -->
+        <div id="target-display" class="target-display hidden">
+          <span id="target-number">0</span><span class="unit">cm</span><span class="action-word">抜け！</span>
+        </div>
+        
+        <!-- COUNTDOWN DISPLAY -->
+        <div id="countdown-display" class="countdown-display hidden">3</div>
+        
+        <!-- RESULTS PANEL -->
+        <div id="result-panel" class="result-panel hidden">
+          <h3 id="result-rank" class="result-rank calligraphy-text">抜刀王！</h3>
+          <div class="result-details">
+            <div class="detail-row">
+              <span class="detail-label">目標の抜刀</span>
+              <span id="result-target" class="detail-val">0cm</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">あなたの抜刀</span>
+              <span id="result-actual" class="detail-val">0cm</span>
+            </div>
+            <div id="result-diff-row" class="detail-row highlight-row">
+              <span class="detail-label">誤差</span>
+              <span id="result-diff" class="detail-val">0cm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ACTION BUTTONS -->
+      <div class="control-panel">
+        <button id="connect-btn" class="wafu-btn connect-btn active">接 続</button>
+        <button id="start-btn" class="wafu-btn start-btn hidden">抜刀開始！</button>
+        <button id="retry-btn" class="wafu-btn retry-btn hidden">再挑戦</button>
+      </div>
+      <!-- REALTIME SENSOR VALUE DISPLAY -->
+      <div id="sensor-monitor" class="sensor-monitor">
+        現在の鞘内距離: <span id="current-distance">0</span>cm
+      </div>
+    </main>
+    <!-- SIMULATION MODE SWITCH (For testing without physical Arduino) -->
+    <div class="debug-panel">
+      <label class="switch-container">
+        <input type="checkbox" id="sim-mode-toggle">
+        <span class="switch-label">デバッグ用シミュレータ動作 (Arduinoなし)</span>
+      </label>
+      <div id="sim-controls" class="sim-controls hidden">
+        <label>抜刀の強さ調整 (シミュレータ用): </label>
+        <input type="range" id="sim-draw-range" min="0" max="60" value="0">
+        <span id="sim-draw-val">0</span>cm
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
 </body>
 </html>
