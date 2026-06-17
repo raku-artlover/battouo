@@ -1,14 +1,12 @@
-
-
 <!DOCTYPE html>
 <html>
 <head>
-<title>Arduino距離確認</title>
+<title>Arduino接続テスト</title>
 </head>
 
 <body style="background:black;color:white;text-align:center">
 
-<h1>距離テスト</h1>
+<h1>Arduino接続テスト</h1>
 
 <button onclick="connect()">接続</button>
 
@@ -18,67 +16,32 @@
 <script>
 
 let port;
-let reader;
 
 
 async function connect(){
 
+try{
+
 port=await navigator.serial.requestPort();
+
 
 await port.open({
 baudRate:9600
 });
 
 
-document.getElementById("text").innerHTML="接続中";
+document.getElementById("text").innerHTML=
+"接続成功";
 
 
-reader=port.readable.getReader();
-
-
-let buffer="";
-
-
-while(true){
-
-const {value,done}=await reader.read();
-
-
-if(done)break;
-
-
-buffer+=new TextDecoder().decode(value);
-
-
-let lines=buffer.split("\n");
-
-buffer=lines.pop();
-
-
-
-for(let line of lines){
-
-
-let num=parseInt(line.trim());
-
-
-if(!isNaN(num)){
-
+}catch(e){
 
 document.getElementById("text").innerHTML=
-"距離："+num+"cm";
+"接続失敗";
 
-
-console.log(num);
-
+console.log(e);
 
 }
-
-}
-
-
-}
-
 
 }
 
