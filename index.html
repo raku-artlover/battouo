@@ -51,49 +51,111 @@ let distance=0;
 let target;
 
 
+
+// Arduino接続
 async function connect(){
 
- port=await navigator.serial.requestPort();
 
- await port.open({
-  baudRate:9600
- });
+port=await navigator.serial.requestPort();
+
+
+await port.open({
+
+ baudRate:9600
+
+});
+
 
 
 reader=port.readable.getReader();
 
 
+let buffer="";
+
+
+
 while(true){
 
- const {value,done}=await reader.read();
 
- if(done)break;
-
-
- let data=new TextDecoder()
- .decode(value);
+const {value,done}=await reader.read();
 
 
- distance=parseInt(data);
+if(done){
 
-
-}
+break;
 
 }
 
 
+
+// 受信データを追加
+
+buffer += new TextDecoder().decode(value);
+
+
+
+// 改行で分割
+
+let lines = buffer.split("\n");
+
+
+// 最後の未完成データを保存
+
+buffer = lines.pop();
+
+
+
+for(let line of lines){
+
+
+let num=parseInt(line.trim());
+
+
+
+if(!isNaN(num)){
+
+
+distance=num;
+
+
+// 確認用
+
+console.log("距離:",distance);
+
+
+}
+
+
+}
+
+
+
+}
+
+
+}
+
+
+
+
+// ゲーム開始
 
 async function startGame(){
 
 
+
 if(!port){
 
- await connect();
+
+await connect();
+
 
 }
 
 
+
 target=Math.floor(Math.random()*40)+10;
+
 
 
 document.getElementById("text")
@@ -101,7 +163,9 @@ document.getElementById("text")
 target+"cm 抜け！";
 
 
+
 let count=3;
+
 
 
 let timer=setInterval(()=>{
@@ -111,35 +175,93 @@ document.getElementById("text")
 .innerHTML=count;
 
 
-count--;
+
+if(count==0){
 
 
-if(count<0){
 
 clearInterval(timer);
 
 
+
+// 0の瞬間の距離を保存
+
+let result=distance;
+
+
+
 let diff=Math.abs(
-target-distance
+target-result
 );
 
 
+
 let score=100-diff*10;
+
+
+
+if(score<0){
+
+score=0;
+
+}
+
+
+
+let evaluation;
+
+
+
+if(diff<=2){
+
+evaluation="達人級 ⚔";
+
+}
+
+else if(diff<=5){
+
+evaluation="かなり近い！";
+
+}
+
+else if(diff<=10){
+
+evaluation="惜しい！";
+
+}
+
+else{
+
+evaluation="修行不足";
+
+}
+
+
 
 
 document.getElementById("text")
 .innerHTML=
 `
 結果<br>
-${distance}cm<br>
+目標:${target}cm<br>
+実測:${result}cm<br>
 差:${diff}cm<br>
-点数:${score}
+点数:${score}<br>
+${evaluation}
 `;
+
+
 
 }
 
 
+
+count--;
+
+
+
 },1000);
+
 
 
 }
